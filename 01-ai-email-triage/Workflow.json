@@ -1,0 +1,278 @@
+{
+  "name": "AI Email Triage",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d0e9e0e3-0651-4f49-92ec-c692a38230c1",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "heU2S57JTEbjro7u",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an email assistant for a small business. Classify this email into ONE category: URGENT, SALES, SPAM or OTHER. Then write a short, professional draft reply in English.\n\nFrom: {{ $json.From }}\nSubject: {{ $json.Subject }}\nMessage: {{ $json.snippet }}\n\nRespond ONLY with JSON, no extra text: {\"category\": \"...\", \"reply\": \"...\"}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        224,
+        0
+      ],
+      "id": "42af987b-65a2-43fe-8354-d323b9d208ae",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5",
+          "cachedResultName": "Claude Sonnet 5",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        160,
+        208
+      ],
+      "id": "b1e6aa27-1dc5-4dd7-aa55-71acb8501a6a",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "zT3ehTX2FNom03v5",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.text.replace(/```json|```/g, '').trim();\nconst data = JSON.parse(raw);\nconst mail = $('Gmail Trigger').first().json;\nreturn [{ json: {\n  category: data.category,\n  reply: data.reply,\n  from: mail.From,\n  subject: mail.Subject\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "e6d2de21-1858-4d75-959d-05e69e5f9d8e",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ \"📧 New email: \" + $json.category + \"\\nFrom: \" + $json.from + \"\\nSubject: \" + $json.subject + \"\\n\\nSuggested reply:\\n\" + $json.reply }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        288
+      ],
+      "id": "02b67b0e-4565-4cc2-90f3-daeb921ddd78",
+      "name": "Send a text message",
+      "webhookId": "559c558b-9769-401b-b699-9e11329894d2",
+      "credentials": {
+        "telegramApi": {
+          "id": "7XkEQ0XsBLifPW20",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1saBsr8-sRD0WWkdSJge5kEZ0pSSGYRAyGDQW3Rt4gFA",
+          "mode": "list",
+          "cachedResultName": "Email Triage Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1saBsr8-sRD0WWkdSJge5kEZ0pSSGYRAyGDQW3Rt4gFA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1saBsr8-sRD0WWkdSJge5kEZ0pSSGYRAyGDQW3Rt4gFA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "From ": "={{ $json.from }}",
+            "Subject": "={{ $json.subject }}",
+            "Category": "={{ $json.category }}",
+            "Draft Reply": "={{ $json.reply }}",
+            "Date": "={{ $now.toFormat('MM/dd/yyyy hh:mm a') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "From ",
+              "displayName": "From ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Draft Reply",
+              "displayName": "Draft Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        816,
+        0
+      ],
+      "id": "863e1106-92cb-4ce0-8a9d-ce53a257fde7",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Vzy294WitnnKH7f7",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "94986572-c25a-4fa6-942b-1fc228791f50",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a43ebc1b1be32a6b8e94b6cc072d9202c608f3ce728d36f6592d9b528e21a13b"
+  },
+  "nodeGroups": [],
+  "id": "8smbzBd9Rk0fiEsR",
+  "tags": []
+}
