@@ -1,0 +1,390 @@
+{
+  "name": "Invoice Data Extractor",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload Invoice",
+        "formDescription": "Upload a PDF invoice and we'll extract the data automatically.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Invoice File",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "25927cfa-39cf-4e00-bb4e-b9e71f8d801a",
+      "name": "On form submission",
+      "webhookId": "55042575-ae02-4da7-86da-4eda2a20ca86"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Invoice_File",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "1fd19003-9f8e-442a-85b5-7b8d45aa0010",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an accounts payable assistant. Extract the data from this invoice text.\n\nInvoice text:\n{{ $json.text }}\n\nReturn ONLY valid JSON, no extra text, with this exact structure:\n{\"vendor\": \"\", \"invoice_number\": \"\", \"invoice_date\": \"YYYY-MM-DD\", \"total\": 0.00, \"tax\": 0.00, \"currency\": \"USD\", \"line_items\": [{\"description\": \"\", \"quantity\": 0, \"unit_price\": 0.00, \"amount\": 0.00}]}\n\nIf a field is missing in the invoice, use null. Never invent data.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        448,
+        0
+      ],
+      "id": "977ca20c-79e1-4a2b-ad8d-8dd4214cef91",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        384,
+        208
+      ],
+      "id": "e11104d3-7e4a-4001-86f1-232c173e0953",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "zT3ehTX2FNom03v5",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let data;\ntry {\n  const raw = $input.first().json.text.replace(/```json|```/g, '').trim();\n  data = JSON.parse(raw);\n} catch (e) {\n  return [{ json: { valid: false, issues: 'AI returned invalid JSON' } }];\n}\n\nconst issues = [];\n['vendor', 'invoice_number', 'invoice_date', 'total'].forEach(f => {\n  if (data[f] === null || data[f] === undefined || data[f] === '') issues.push('Missing ' + f);\n});\n\nconst items = Array.isArray(data.line_items) ? data.line_items : [];\nconst itemsSum = items.reduce((s, i) => s + Number(i.amount || 0), 0);\nconst expected = itemsSum + Number(data.tax || 0);\nif (items.length && Math.abs(expected - Number(data.total)) > 0.05) {\n  issues.push('Total mismatch: items + tax = ' + expected.toFixed(2) + ' vs total = ' + Number(data.total).toFixed(2));\n}\n\nreturn [{ json: {\n  valid: issues.length === 0,\n  issues: issues.join('; '),\n  vendor: data.vendor,\n  invoice_number: data.invoice_number,\n  invoice_date: data.invoice_date,\n  total: data.total,\n  tax: data.tax,\n  line_items: items.map(i => i.quantity + ' x ' + i.description + ' @ $' + i.unit_price).join(' \\n ')\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        0
+      ],
+      "id": "506c8d4f-b0ad-44e8-a705-cde46d75417f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a5805bd9-da84-45e3-af74-2522ecff6729",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "590714f8-239c-43f6-b717-f2930dcee535",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Tso46xLt1lJD95Lg97TdbHQwcBU9vrRHOlJ2n8ZI8vM",
+          "mode": "list",
+          "cachedResultName": "Invoice Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Tso46xLt1lJD95Lg97TdbHQwcBU9vrRHOlJ2n8ZI8vM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Tso46xLt1lJD95Lg97TdbHQwcBU9vrRHOlJ2n8ZI8vM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Processed": "={{ $now.toFormat('MM/dd/yyyy hh:mm a') }}",
+            "Vendor": "={{ $json.vendor }}",
+            "Invoice Number": "={{ $json.invoice_number }}",
+            "Invoice Date": "={{ $json.invoice_date }}",
+            "Total": "={{ $json.total }}",
+            "Tax": "={{ $json.tax }}",
+            "Line Items": "={{ $json.line_items }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Processed",
+              "displayName": "Processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vendor",
+              "displayName": "Vendor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Invoice Date",
+              "displayName": "Invoice Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total",
+              "displayName": "Total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tax",
+              "displayName": "Tax",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Line Items",
+              "displayName": "Line Items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1280,
+        -224
+      ],
+      "id": "ac03eec4-dab9-49c1-a34d-e4a7bb0f1154",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Vzy294WitnnKH7f7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "=   {{ \"✅ Invoice processed\\nVendor: \" + $json.vendor + \"\\nInvoice: \" + $json.invoice_number + \"\\nTotal: $\" + $json.total }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1248,
+        -96
+      ],
+      "id": "998ebc33-7b54-4207-bd8e-e04526c0a45e",
+      "name": "Send a text message",
+      "webhookId": "c7508906-454e-484c-93d1-c5c1f4e62102",
+      "credentials": {
+        "telegramApi": {
+          "id": "7XkEQ0XsBLifPW20",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "1817821806",
+        "text": "=   {{ \"⚠️ Invoice needs review\\nIssues: \" + $json.issues }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1264,
+        96
+      ],
+      "id": "20c0a933-d8e7-4662-8309-5bdf048fc0a3",
+      "name": "Send a text message1",
+      "webhookId": "d29b9a6e-3ca7-4d04-a8a8-284d151f270c",
+      "credentials": {
+        "telegramApi": {
+          "id": "7XkEQ0XsBLifPW20",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "869b32a0-f23b-471a-9a31-3d68bed50d11",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a43ebc1b1be32a6b8e94b6cc072d9202c608f3ce728d36f6592d9b528e21a13b"
+  },
+  "nodeGroups": [],
+  "id": "pxvhtWKdkQmomVn6",
+  "tags": []
+}
