@@ -1,0 +1,352 @@
+{
+  "name": "HVAC Service Request AI.",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Request HVAC Service",
+        "formDescription": "Tell us what's going on and we'll get back to you shortly.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone"
+            },
+            {
+              "fieldLabel": "Service Address",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Describe the problem",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9ff62a1d-5861-4792-8653-5a7532a678bd",
+      "name": "On form submission",
+      "webhookId": "78797ed3-1350-4b7a-968a-bbe908fa28dc"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a dispatcher assistant for an HVAC company. Analyze this service request.\n\nCustomer problem: {{ $json['Describe the problem'] }}\n\nReturn ONLY JSON, no extra text:\n{\"urgency\": \"EMERGENCY or HIGH or NORMAL\", \"issue_type\": \"No cooling, No heating, Noise, Leak, Thermostat, Maintenance or Other\", \"summary\": \"one sentence summary for the technician\", \"customer_message\": \"2-3 sentence friendly confirmation for the customer, mentioning the expected response time based on urgency\"}\n\nUrgency rules: EMERGENCY = gas smell, burning smell, water near electrical parts, or no cooling/heating with vulnerable people at home (babies, elderly). HIGH = system not working. NORMAL = maintenance or minor issue. If EMERGENCY with a gas or burning smell, the customer message must tell them to turn off the system and call emergency services.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        224,
+        0
+      ],
+      "id": "da576686-27de-4558-a0ca-8261adaa06ac",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5",
+          "cachedResultName": "Claude Sonnet 5",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        160,
+        208
+      ],
+      "id": "81f39ada-9137-46f7-b347-3aed15b320ad",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "iXUUq95luUxL6QJW",
+          "name": "Anthropic account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.text.replace(/```json|```/g, '').trim();\nconst ai = JSON.parse(raw);\nconst form = $('On form submission').first().json;\nreturn [{ json: {\n  name: form['Full Name'],\n  email: form['Email'],\n  phone: form['Phone'],\n  address: form['Service Address'],\n  problem: form['Describe the problem'],\n  urgency: ai.urgency,\n  issue_type: ai.issue_type,\n  summary: ai.summary,\n  customer_message: ai.customer_message\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "4ad4d7fa-ffcd-42ba-b3c3-065a810d301f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qaMA4AOT4fKV_wrZ09X9u6Bpww8BN7wBdv31fqcCSak",
+          "mode": "list",
+          "cachedResultName": "HVAC Service Requests.",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qaMA4AOT4fKV_wrZ09X9u6Bpww8BN7wBdv31fqcCSak/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qaMA4AOT4fKV_wrZ09X9u6Bpww8BN7wBdv31fqcCSak/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('MM/dd/yyyy hh:mm a') }}",
+            "Name": "={{ $json.name }}",
+            "E-Mail": "={{ $json.email }}",
+            "Phone": "={{ $json.phone }}",
+            "Address ": "={{ $json.address }}",
+            "Problem": "={{ $json.problem }}",
+            "Urgency": "={{ $json.urgency }}",
+            "Issue Type": "={{ $json.issue_type }}",
+            "Summary": "={{ $json.summary }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "E-Mail",
+              "displayName": "E-Mail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address ",
+              "displayName": "Address ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Problem",
+              "displayName": "Problem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Issue Type",
+              "displayName": "Issue Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        848,
+        160
+      ],
+      "id": "b56f8f79-868e-4fff-abcf-579c84f8433c",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Vzy294WitnnKH7f7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ \"🚨 New HVAC request: \" + $json.urgency + \"\\nName: \" + $json.name + \"\\nPhone: \" + $json.phone + \"\\nAddress: \" + $json.address + \"\\nIssue: \" + $json.issue_type + \"\\n\\nSummary:\\n\" + $json.summary }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        16
+      ],
+      "id": "38d31018-401f-4a34-84da-fc8fd0dc8fdd",
+      "name": "Send a text message",
+      "webhookId": "51264644-3845-4cfb-87d5-eae345faa9f9",
+      "credentials": {
+        "telegramApi": {
+          "id": "7XkEQ0XsBLifPW20",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "We received your HVAC service request",
+        "message": "={{ $json.customer_message }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        -160
+      ],
+      "id": "02c30653-aa63-4f51-be23-e60b62f078ad",
+      "name": "Send a message",
+      "webhookId": "ff2ad359-d5e9-4edf-a930-59ca04faab48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "heU2S57JTEbjro7u",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9db9fa0e-d926-44a0-a86b-37d039f09501",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a43ebc1b1be32a6b8e94b6cc072d9202c608f3ce728d36f6592d9b528e21a13b"
+  },
+  "nodeGroups": [],
+  "id": "siWOkYrV4iLFgRmE",
+  "tags": []
+}
