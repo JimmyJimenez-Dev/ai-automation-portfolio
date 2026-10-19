@@ -10,6 +10,9 @@ HVAC companies receive requests of very different urgency. A dispatcher must rea
 ## Solution
 A web form feeds Claude, which classifies urgency (EMERGENCY, HIGH, NORMAL), identifies the issue type and writes a summary. The workflow then alerts the technician, logs the request and emails the customer a confirmation with an expected response time.
 
+## Result
+Estimated: reduces dispatcher intake from about 5 minutes per request (reading, prioritizing, logging, replying) to about 15 seconds, and flags emergencies immediately instead of waiting in a queue.
+
 ## How it works
 n8n Form → Claude (urgency, issue type, summary, customer message) → Code (parse JSON) → Google Sheets log + Telegram alert + Gmail confirmation
 
