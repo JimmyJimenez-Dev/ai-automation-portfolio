@@ -270,7 +270,7 @@
     },
     {
       "parameters": {
-        "chatId": "1817821806",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "=   {{ \"⚠️ Invoice needs review\\nIssues: \" + $json.issues }}",
         "additionalFields": {
           "appendAttribution": false
