@@ -10,6 +10,9 @@ Small businesses lose hours sorting and answering routine emails.
 ## Solution
 Each new email is automatically categorized (URGENT, SALES, SPAM, OTHER) and gets a suggested reply, so nothing important is missed.
 
+## Result
+Estimated: cuts email triage from about 3 minutes of reading, sorting and drafting per email to about 10 seconds, with an alert within a minute of arrival.
+
 ## How it works
 Gmail Trigger → Claude (classification + draft reply) → Code (parse JSON) → Telegram alert + Google Sheets log
 
