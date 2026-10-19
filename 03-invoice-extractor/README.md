@@ -10,6 +10,9 @@ Accounts payable teams re-type invoice data by hand. Mistakes and missing fields
 ## Solution
 A PDF is uploaded, Claude extracts vendor, invoice number, date, total, tax and line items as JSON, and a validation step checks required fields and that line items + tax equal the total.
 
+## Result
+Estimated: replaces about 5 minutes of manual data entry per invoice with about 15 seconds, and catches total mismatches before anything is saved.
+
 ## How it works
 n8n Form (PDF upload) → Extract From PDF → Claude (JSON extraction) → Code (validation) → If
 
