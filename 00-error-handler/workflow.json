@@ -1,0 +1,46 @@
+{
+  "name": "Error Handler (Telegram alert)",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "7d1c2f4e-3b0a-4c5e-9a61-2f6c8e0b1a01",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ \"❌ Workflow failed: \" + $json.workflow.name + \"\\nNode: \" + ($json.execution.lastNodeExecuted || \"unknown\") + \"\\nError: \" + ($json.execution.error?.message || \"unknown\") + \"\\nExecution: \" + ($json.execution.url || $json.execution.id) }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [220, 0],
+      "id": "7d1c2f4e-3b0a-4c5e-9a61-2f6c8e0b1a02",
+      "name": "Send error alert"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send error alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
