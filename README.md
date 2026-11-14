@@ -31,7 +31,7 @@ n8n · Claude (Anthropic API) · Python · pytest · Gmail · Telegram Bot API �
 
 ## How I use AI in this portfolio
 
-AI is part of the product here, and it was also part of my workflow. I want to be transparent about both:
+AI is part of the product here, and it was also part of my workflow. This is how I handled the portfolio's architecture:
 
 - **Me:** I chose the problems from my own work as an HVAC and maintenance technician, designed the workflows in n8n, defined the business and safety rules (for example, gas or smoke is always an emergency), set up the integrations, and tested every workflow with real inputs before recording the demos.
 - **Claude as a pair programmer:** I used Claude (Anthropic) to review my workflows, suggest improvements, and help write and refactor code and documentation, such as the Python validation, the unit tests and the error handling. I review every change, run it, and only keep what I understand and can explain.
