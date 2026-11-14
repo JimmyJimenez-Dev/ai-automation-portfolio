@@ -29,6 +29,14 @@ n8n · Claude (Anthropic API) · Python · pytest · Gmail · Telegram Bot API �
 3. Replace `YOUR_TELEGRAM_CHAT_ID` with your chat ID.
 4. Optional: import `00-error-handler/workflow.json`, then in each workflow open **Settings → Error Workflow** and select *Error Handler*.
 
+## How I use AI in this portfolio
+
+AI is part of the product here, and it was also part of my workflow. I want to be transparent about both:
+
+- **Me:** I chose the problems from my own work as an HVAC and maintenance technician, designed the workflows in n8n, defined the business and safety rules (for example, gas or smoke is always an emergency), set up the integrations, and tested every workflow with real inputs before recording the demos.
+- **Claude as a pair programmer:** I used Claude (Anthropic) to review my workflows, suggest improvements, and help write and refactor code and documentation, such as the Python validation, the unit tests and the error handling. I review every change, run it, and only keep what I understand and can explain.
+- **In the commits:** commits where Claude helped are marked with `Co-Authored-By` and `Reviewed-by: Claude`.
+
 ## Author
 
 Jimmy Jimenez · [GitHub](https://github.com/JimmyJimenez-Dev)
